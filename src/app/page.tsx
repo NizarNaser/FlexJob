@@ -1,69 +1,102 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import JobCard from "@/components/JobCard";
+import { useApp } from "@/lib/store";
 
 export default function Home() {
+  const { jobs, employers } = useApp();
+  const employerRatingById = useMemo(
+    () => new Map(employers.map((e) => [e.id, e.rating])),
+    [employers]
+  );
+  const featured = jobs.slice(0, 3);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div>
+      <section className="bg-gradient-to-b from-blue-50 to-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            Flexible part-time work,{" "}
+            <span className="text-blue-600">on your own schedule</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
+            Set the days and hours you want to work, and let FlexJob match you with jobs that
+            actually fit your life — no more guessing which listings work with your availability.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/jobs"
+              className="w-full rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 sm:w-auto"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Find a Job
+            </Link>
+            <Link
+              href="/jobs/new"
+              className="w-full rounded-full border border-blue-200 bg-white px-8 py-3 text-base font-semibold text-blue-700 hover:bg-blue-50 sm:w-auto"
             >
-              Learning
-            </a>{" "}
-            center.
+              Post a Job
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+        <h2 className="text-center text-2xl font-bold text-slate-900">How it works</h2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {[
+            {
+              icon: "🗓️",
+              title: "Set your availability",
+              text: "Workers plan exactly which days and hours they want to work using the availability planner.",
+            },
+            {
+              icon: "🔍",
+              title: "Search with smart filters",
+              text: "Filter jobs by pay, category, location, time of day, and match against your own schedule.",
+            },
+            {
+              icon: "⭐",
+              title: "Work, then rate each other",
+              text: "After a job, both sides leave verified reviews — building trust across the platform.",
+            },
+          ].map((step) => (
+            <div key={step.title} className="rounded-2xl border border-blue-100 bg-white p-6 text-center shadow-sm">
+              <div className="text-4xl">{step.icon}</div>
+              <h3 className="mt-3 font-semibold text-slate-800">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-500">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-blue-50/60 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-900">Featured jobs hiring now</h2>
+            <Link href="/jobs" className="text-sm font-semibold text-blue-600 hover:underline">
+              View all jobs →
+            </Link>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((job) => (
+              <JobCard key={job.id} job={job} employerRating={employerRatingById.get(job.employerId)} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
+        <div className="rounded-3xl border border-blue-100 bg-white p-10 shadow-sm">
+          <div className="text-4xl">🤖</div>
+          <h2 className="mt-3 text-2xl font-bold text-slate-900">Need a hand? Ask the AI assistant.</h2>
+          <p className="mx-auto mt-2 max-w-xl text-slate-600">
+            The chat bubble in the corner can help you find matching jobs, plan your schedule,
+            polish your CV, or write a job posting — any time.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
     </div>
   );
 }

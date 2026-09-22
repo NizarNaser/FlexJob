@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FlexJob
 
-## Getting Started
+A platform for finding and posting flexible, part-time jobs, built with Next.js, Prisma (SQLite), and NextAuth.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
+npx prisma migrate dev   # creates the local SQLite database
+npm run db:seed   # loads sample jobs, workers, and employers
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Authentication
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Accounts are created and signed into through **Google only** — there's no separate
+password. Configuration lives in `.env`:
 
-## Learn More
+```
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+```
 
-To learn more about Next.js, take a look at the following resources:
+To get these: go to the [Google Cloud Console credentials page](https://console.cloud.google.com/apis/credentials),
+create an OAuth client ID of type "Web application", and add
+`http://localhost:3000/api/auth/callback/google` as an authorized redirect URI
+(add your production URL's equivalent when you deploy). Paste the resulting client ID
+and secret into `.env`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Dev sign-in fallback:** until Google credentials are set, `.env` has
+`ENABLE_DEV_LOGIN="true"`, which adds a "sign in with just an email" option on the
+login page so you can test the app locally. **Set this to `"false"` (or remove the
+provider in `src/auth.ts`) before deploying to production.**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Roles & the control panel
 
-## Deploy on Vercel
+- **Worker** / **Employer** — chosen by the user the first time they sign in (`/welcome`).
+- **Manager** — read-only access to `/admin`: can view all users, jobs, and reviews, but
+  every edit/delete button is hidden, and the underlying API routes independently reject
+  mutation requests from managers (checked server-side, not just hidden in the UI).
+- **Admin** (super admin) — full access to `/admin`: can delete jobs, delete reviews,
+  delete user accounts, and toggle an employer's "Verified" badge.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Roles are assigned automatically by email on sign-in via `.env`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+ADMIN_EMAILS="you@example.com"
+MANAGER_EMAILS="someone-else@example.com"
+```
+
+Comma-separate multiple addresses. Anyone not in either list picks Worker or Employer
+themselves after their first sign-in.
+
+## Database
+
+Development uses SQLite (`dev.db`, gitignored) through Prisma. The schema is in
+`prisma/schema.prisma`. For production scale, swap the datasource to Postgres (or
+another Prisma-supported database) and update `DATABASE_URL` — no application code
+needs to change beyond the Prisma driver adapter in `src/lib/prisma.ts`.
+
+Useful commands:
+
+```bash
+npx prisma studio          # browse/edit the database in a GUI
+npx prisma migrate dev     # apply schema changes
+npm run db:seed     # re-seed sample data (safe to re-run)
+```

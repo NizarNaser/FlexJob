@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  WORKER
+  EMPLOYER
+  MANAGER
+  ADMIN
+}
+
+enum ContractType {
+  ONE_TIME
+  PART_TIME
+  SEASONAL
+}
+
+enum ScheduleType {
+  FLEXIBLE
+  FIXED
+  SHIFTS
+}
+
+enum TimeOfDay {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum Day {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  image     String?
+  role      Role?
+  createdAt DateTime @default(now())
+
+  workerProfile   WorkerProfile?
+  employerProfile EmployerProfile?
+
+  reviewsWritten  Review[] @relation("ReviewAuthor")
+  reviewsReceived Review[] @relation("ReviewTarget")
+}
+
+model WorkerProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio        String   @default("")
+  skills     String   @default("") // comma-separated
+  location   String   @default("Not set")
+  cvSummary  String   @default("No CV uploaded yet.")
+
+  availability AvailabilitySlot[]
+}
+
+model EmployerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String   @default("")
+  location    String   @default("Not set")
+  verified    Boolean  @default(false)
+
+  jobs Job[]
+}
+
+model AvailabilitySlot {
+  id              String        @id @default(cuid())
+  workerProfileId String
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  day             Day
+  start           Int
+  end             Int
+}
+
+model Job {
+  id              String          @id @default(cuid())
+  title           String
+  employerId      String
+  employer        EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  category        String
+  description     String
+  location        String
+  remote          Boolean         @default(false)
+  payRate         Float
+  contractType    ContractType
+  scheduleType    ScheduleType
+  timeOfDay       String          @default("") // comma-separated TimeOfDay values
+  urgent          Boolean         @default(false)
+  postedDate      DateTime        @default(now())
+
+  requiredSlots JobRequiredSlot[]
+}
+
+model JobRequiredSlot {
+  id    String @id @default(cuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  day   Day
+  start Int
+  end   Int
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  authorId     String
+  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  targetId     String
+  target       User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  rating       Int
+  comment      String
+  verified     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
